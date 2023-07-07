@@ -303,7 +303,9 @@ class RMT : RMC
                     BetterChat::SendChatMessage(Icons::Users + " Switching map...");
 #endif
 
-                    RMTSwitchMap();
+                    if (PluginSettings::RMC_AutoSwitch) {         
+                        RMTSwitchMap();
+                    }
                 }
                 if (isBelowObjectiveCompleted() && !RMC::GotBelowMedalOnCurrentMap && PluginSettings::RMC_GoalMedal != RMC::Medals[0]) {
                     Log::Log(playerGotBelowGoalActualMap.name + " got below goal medal with a time of " + playerGotBelowGoalActualMap.time);
@@ -400,6 +402,9 @@ class RMT : RMC
         CGameCtnChallenge@ currentMap = cast<CGameCtnChallenge>(GetApp().RootMap);
         if (currentMap !is null) {
             SkipButton();
+            if (!PluginSettings::RMC_AutoSwitch && RMC::GotGoalMedalOnCurrentMap) {              
+                NextMapButton();  
+            }
             if (IS_DEV_MODE) {
                 DevButtons();
             }
@@ -432,6 +437,17 @@ class RMT : RMC
 #if DEPENDENCY_BETTERCHAT
             BetterChat::SendChatMessage(Icons::Users + " Skipping map...");
 #endif
+            startnew(CoroutineFunc(RMTSwitchMap));
+        }
+        UI::EndDisabled();
+    }
+
+    void NextMapButton() override
+    {
+        UI::BeginDisabled(RMC::ClickedOnSkip || isSwitchingMap);
+        if(UI::GreenButton(Icons::Play + " Next map")) {
+            RMC::ClickedOnSkip = true;
+            if (RMC::IsPaused) RMC::IsPaused = false;
             startnew(CoroutineFunc(RMTSwitchMap));
         }
         UI::EndDisabled();
